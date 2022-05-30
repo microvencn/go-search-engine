@@ -10,7 +10,8 @@ type LevelDB struct {
 }
 
 var DocDB *LevelDB
-var DictDB *LevelDB
+var InvertedIndex *LevelDB
+var ForwardIndex *LevelDB
 
 func Open(path string) *LevelDB {
 	db, err := leveldb.OpenFile(path, nil)
@@ -45,6 +46,7 @@ func (s *LevelDB) Close() error {
 }
 
 func init() {
-	DictDB = Open("./database/dict")
+	InvertedIndex = Open("./database/inverted")
 	DocDB = Open("./database/doc")
+	ForwardIndex = Open("./database/forward")
 }

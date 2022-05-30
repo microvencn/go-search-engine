@@ -1,6 +1,7 @@
 package fenci
 
 import (
+	"GoSearchEngine/utils"
 	"github.com/wangbin/jiebago"
 	"log"
 )
@@ -8,7 +9,7 @@ import (
 var seg jiebago.Segmenter
 
 func ReadDict() {
-	err := seg.LoadDictionary("./fenci/dictionary.txt")
+	err := seg.LoadDictionary(utils.GetPath("/fenci/dictionary.txt"))
 	if err != nil {
 		log.Fatalln("加载词典失败")
 		return
@@ -22,6 +23,6 @@ func doSomething(ch <-chan string, f func(word string)) {
 }
 
 // ExecAndDoSomething 对 sentence 分词并对每个词执行 f 函数
-func ExecAndDoSomething(sentence string, f func(word string)) {
-	doSomething(seg.CutForSearch(sentence, true), f)
+func ExecAndDoSomething(sentence *string, f func(word string)) {
+	doSomething(seg.CutForSearch(*sentence, true), f)
 }

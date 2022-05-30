@@ -34,7 +34,7 @@ func test(wg *sync.WaitGroup, t *testing.T) {
 			avl.Insert(r.Intn(1000))
 		}
 		// 校验先序遍历是否有序
-		s := avl.PreOrder()
+		s := avl.Inorder()
 		for i := 1; i < len(s); i++ {
 			if s[i] < s[i-1] {
 				t.Errorf("存在错误")

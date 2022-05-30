@@ -165,17 +165,17 @@ func (avl *Avl[T]) rotateRL(node *Node[T]) *Node[T] {
 	return avl.rotateLeft(node)
 }
 
-func (avl *Avl[T]) PreOrder() []T {
+func (avl *Avl[T]) Inorder() []T {
 	s := make([]T, 0)
 	node := avl.head
-	avl.preOrder(node, &s)
+	avl.inorder(node, &s)
 	return s
 }
 
-func (avl *Avl[T]) preOrder(node *Node[T], s *[]T) {
+func (avl *Avl[T]) inorder(node *Node[T], s *[]T) {
 	if node != nil {
-		avl.preOrder(node.left, s)
+		avl.inorder(node.left, s)
 		*s = append(*s, node.val)
-		avl.preOrder(node.right, s)
+		avl.inorder(node.right, s)
 	}
 }

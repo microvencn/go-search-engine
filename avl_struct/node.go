@@ -12,14 +12,6 @@ type Node[T avlValType] struct {
 	height int
 }
 
-func (n Node[T]) GetLeftVal() T {
-	return n.left.val
-}
-
-func (n Node[T]) GetRightVal() T {
-	return n.right.val
-}
-
 func NewNode[T avlValType](val T) *Node[T] {
 	return &Node[T]{
 		val:    val,
