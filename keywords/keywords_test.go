@@ -10,9 +10,9 @@ func TestGetAllKeyWords(t *testing.T) {
 	//InitWukongIndex()
 	ch := GetAllKeyWords()
 	count := 0
-	for _ = range ch {
+	for word := range ch {
 		count++
-		//fmt.Println(word)
+		fmt.Println(word)
 	}
 	fmt.Println(count)
 }

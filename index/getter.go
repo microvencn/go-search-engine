@@ -43,7 +43,7 @@ func GetIdWords(id int) ([]string, bool) {
 }
 
 func ReadWukong() <-chan utils.CsvRow {
-	return utils.ReadCsv(utils.GetPath("/dataset/wukong.csv"), 2, true)
+	return utils.ReadCsv(utils.GetPath("/../dataset/wukong.csv"), 2, true)
 }
 
 func GetDocument(id int) ([]byte, bool) {

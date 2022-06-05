@@ -9,8 +9,9 @@ import (
 var seg jiebago.Segmenter
 
 func ReadDict() {
-	err := seg.LoadDictionary(utils.GetPath("/fenci/dictionary.txt"))
+	err := seg.LoadDictionary(utils.GetPath("/../fenci/dictionary.txt"))
 	if err != nil {
+		log.Println(err)
 		log.Fatalln("加载词典失败")
 		return
 	}

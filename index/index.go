@@ -4,17 +4,19 @@ import (
 	"GoSearchEngine/avl_struct"
 	"GoSearchEngine/fenci"
 	"GoSearchEngine/keywords"
+	"GoSearchEngine/trie"
 	"strings"
 	"sync"
 	"unicode"
 )
 
 // InitWukongIndex 初始化悟空数据集索引
-func InitWukongIndex() {
+func InitWukongIndex() *trie.Trie {
 	keywords.InitKeyWordsFile()
 	defer keywords.CloseKeywordsFile()
 	rows := ReadWukong()
 	wg := sync.WaitGroup{}
+	trie := trie.NewTrie()
 	// 开启五个线程同时处理分词
 	// 这也是为什么 ReadCsv 返回 chan 的原因
 	for i := 1; i <= 5; i++ {
@@ -27,11 +29,14 @@ func InitWukongIndex() {
 				AddWordsToInvertedIndex(words, csvRow.RowNo)
 				AddWordsToForwardIndex(words, csvRow.RowNo)
 				SaveDocument(csvRow.RowNo, &csvRow.Columns[1])
+				//构造trie树
+				trie.Add(doc)
 			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
+	return trie
 }
 
 // AddDocToInvertedIndex 为一个文档添加倒排索引
