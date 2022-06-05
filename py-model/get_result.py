@@ -81,17 +81,32 @@ imagefeat_test = torch.from_numpy(imagefeat_test)
 # imagefeat_test = imagefeat_test.cuda()
 
 preds_test = []
-CHUNK = 1024*4
-
 print('Finding similar images...')
-CTS_test = len(imagefeat)//CHUNK
-if len(imagefeat)%CHUNK!=0: CTS_test += 1
 
 a = 0
 b = len(imagefeat)
-    
-distances_test = torch.matmul(imagefeat_test, imagefeat[a:b].T).T
+
+DATA_PATH = ''
+IMAGE_PATH = 'images/'
+train = pd.read_csv(DATA_PATH + 'wukong.csv')
+
+distances_test = torch.matmul(imagefeat, imagefeat_test.T).T
 distances_test = distances_test.data.cpu().numpy()
-distances_test = distances_test.reshape(-1)
-distances_test_sort = sorted(enumerate(distances_test), key = lambda x:x[1], reverse=True)
+
+IDX = np.where(distances_test[0,]>0.85)[0][:]
+
+# print(IDX, len(IDX))
+o = train.iloc[IDX].data_id.values
+# print(o, len(o))
+
+# print(distances_test[0,])
+# print(len(distances_test[0,]))
+# print(a, b, b-a)
+# print(o)
+distances_test_sort = []
+for i in range(0, len(o)):
+    distances_test_sort.append((o[i], distances_test[0,][IDX[i]]))
+
+# distances_test = distances_test[0,].reshape(-1)
+distances_test_sort = sorted(distances_test_sort, key = lambda x:x[1], reverse=True)
 print(distances_test_sort)
