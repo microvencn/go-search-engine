@@ -1,7 +1,7 @@
 package score
 
 import (
-	"GoSearchEngine/index"
+	"go-search-engine/src/service/index"
 	"sort"
 )
 

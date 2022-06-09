@@ -9,7 +9,7 @@ import (
 
 func GetPath(path string) string {
 	workDir, _ := os.Getwd()
-	return workDir + path
+	return workDir + "/src/service" + path
 }
 
 func ReadLineFile(file *os.File) <-chan string {

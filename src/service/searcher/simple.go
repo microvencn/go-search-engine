@@ -1,11 +1,11 @@
 package searcher
 
 import (
-	"GoSearchEngine/fenci"
-	"GoSearchEngine/index"
-	"GoSearchEngine/score"
-	"GoSearchEngine/storage"
-	"GoSearchEngine/utils"
+	"go-search-engine/src/service/fenci"
+	"go-search-engine/src/service/index"
+	"go-search-engine/src/service/score"
+	"go-search-engine/src/service/storage"
+	"go-search-engine/src/service/utils"
 	"sort"
 	"strings"
 )

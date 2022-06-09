@@ -1,8 +1,8 @@
 package fenci
 
 import (
-	"GoSearchEngine/utils"
 	"github.com/wangbin/jiebago"
+	"go-search-engine/src/service/utils"
 	"log"
 )
 

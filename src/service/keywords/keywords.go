@@ -1,8 +1,8 @@
 package keywords
 
 import (
-	"GoSearchEngine/utils"
 	"bufio"
+	"go-search-engine/src/service/utils"
 	"log"
 	"os"
 )

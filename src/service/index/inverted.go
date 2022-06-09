@@ -1,7 +1,7 @@
 package index
 
 import (
-	"GoSearchEngine/storage"
+	"go-search-engine/src/service/storage"
 	"strconv"
 	"strings"
 )

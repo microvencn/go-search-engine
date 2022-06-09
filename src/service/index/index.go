@@ -1,12 +1,12 @@
 package index
 
 import (
-	"GoSearchEngine/avl_struct"
-	"GoSearchEngine/fenci"
-	"GoSearchEngine/keywords"
-	"GoSearchEngine/storage"
-	"GoSearchEngine/trie"
-	"GoSearchEngine/utils"
+	"go-search-engine/src/service/avl_struct"
+	"go-search-engine/src/service/fenci"
+	"go-search-engine/src/service/keywords"
+	"go-search-engine/src/service/storage"
+	"go-search-engine/src/service/trie"
+	"go-search-engine/src/service/utils"
 	"log"
 	"strconv"
 	"strings"
