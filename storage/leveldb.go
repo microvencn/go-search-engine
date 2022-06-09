@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"GoSearchEngine/utils"
 	"github.com/syndtr/goleveldb/leveldb"
+	"strconv"
 )
 
 type LevelDB struct {
@@ -9,7 +11,6 @@ type LevelDB struct {
 	path string
 }
 
-var DocDB *LevelDB
 var InvertedIndex *LevelDB
 var ForwardIndex *LevelDB
 
@@ -47,6 +48,15 @@ func (s *LevelDB) Close() error {
 
 func init() {
 	InvertedIndex = Open("./database/inverted")
-	DocDB = Open("./database/doc")
 	ForwardIndex = Open("./database/forward")
+}
+
+// GetDocument 根据 ID 获取文档
+func GetDocument(id int) ([]byte, bool) {
+	key := []byte(strconv.Itoa(id))
+	return DocDB.Get(key)
+}
+
+func GetDBPath() string {
+	return utils.GetPath("/database")
 }

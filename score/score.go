@@ -20,7 +20,7 @@ func (c Counter) CountById(id int) (score int, success bool) {
 	if !exists {
 		return 0, false
 	}
-	return c.IntersectSize(words), true
+	return c.IntersectSize(words.Keywords, words.Times), true
 }
 
 func (c Counter) SortAfterCount(ids []int) IdScoreList {
@@ -42,7 +42,7 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 }
 
 // IntersectSize 计算交集大小，要求 targetWords 和 words 均为有序
-func (c Counter) IntersectSize(words []string) int {
+func (c Counter) IntersectSize(words []string, times []int) int {
 	i, j, count := 0, 0, 0
 	for {
 		for i < len(c.TargetWords) && c.TargetWords[i] < words[j] {
@@ -60,7 +60,7 @@ func (c Counter) IntersectSize(words []string) int {
 		}
 
 		if c.TargetWords[i] == words[j] {
-			count++
+			count += times[j]
 			i++
 			j++
 			if i == len(c.TargetWords) || j == len(words) {

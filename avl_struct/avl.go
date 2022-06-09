@@ -1,7 +1,13 @@
 package avl_struct
 
 type Avl[T avlValType] struct {
-	head *Node[T]
+	head    *Node[T]
+	nodeNum int
+}
+
+type TimesResult[T avlValType] struct {
+	Times   int
+	Content T
 }
 
 func getTreeHeight[T avlValType](node *Node[T]) int {
@@ -19,25 +25,21 @@ func max(x int, y int) int {
 	return y
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
 func (avl *Avl[T]) InsertNode(node *Node[T], val T) *Node[T] {
 	// 递归到此处若 node 为 nil，证明新的节点是上一次递归节点的孩子
 	// 所以返回一个新的节点指针
 	if node == nil {
-		return NewNode(val)
+		newNode := NewNode(val)
+		avl.nodeNum++
+		return newNode
 	}
 
-	if val < node.val {
+	if val < node.Val {
 		node.left = avl.InsertNode(node.left, val)
-	} else if val > node.val {
+	} else if val > node.Val {
 		node.right = avl.InsertNode(node.right, val)
 	} else {
+		node.Times++
 		return node
 	}
 
@@ -47,22 +49,22 @@ func (avl *Avl[T]) InsertNode(node *Node[T], val T) *Node[T] {
 	balance := getTreeHeight(node.left) - getTreeHeight(node.right)
 
 	// LL
-	if balance > 1 && val < node.left.val {
+	if balance > 1 && val < node.left.Val {
 		return avl.rotateRight(node)
 	}
 
 	// RR
-	if balance < -1 && val > node.right.val {
+	if balance < -1 && val > node.right.Val {
 		return avl.rotateLeft(node)
 	}
 
 	// LR
-	if balance > 1 && val > node.left.val {
+	if balance > 1 && val > node.left.Val {
 		return avl.rotateLR(node)
 	}
 
 	// RL
-	if balance < -1 && val < node.right.val {
+	if balance < -1 && val < node.right.Val {
 		return avl.rotateRL(node)
 	}
 
@@ -166,7 +168,7 @@ func (avl *Avl[T]) rotateRL(node *Node[T]) *Node[T] {
 }
 
 func (avl *Avl[T]) Inorder() []T {
-	s := make([]T, 0)
+	s := make([]T, avl.nodeNum)
 	node := avl.head
 	avl.inorder(node, &s)
 	return s
@@ -175,7 +177,21 @@ func (avl *Avl[T]) Inorder() []T {
 func (avl *Avl[T]) inorder(node *Node[T], s *[]T) {
 	if node != nil {
 		avl.inorder(node.left, s)
-		*s = append(*s, node.val)
+		(*s)[len(*s)] = node.Val
 		avl.inorder(node.right, s)
+	}
+}
+
+func (avl *Avl[T]) InorderNode() []*Node[T] {
+	s := make([]*Node[T], 0, avl.nodeNum)
+	avl.inorderNode(avl.head, &s)
+	return s
+}
+
+func (avl *Avl[T]) inorderNode(node *Node[T], s *[]*Node[T]) {
+	if node != nil {
+		avl.inorderNode(node.left, s)
+		*s = append(*s, node)
+		avl.inorderNode(node.right, s)
 	}
 }

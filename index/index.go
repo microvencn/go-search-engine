@@ -4,6 +4,10 @@ import (
 	"GoSearchEngine/avl_struct"
 	"GoSearchEngine/fenci"
 	"GoSearchEngine/keywords"
+	"GoSearchEngine/storage"
+	"GoSearchEngine/utils"
+	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode"
@@ -22,10 +26,10 @@ func InitWukongIndex() {
 		go func() {
 			for csvRow := range rows {
 				doc := strings.ToLower(csvRow.Columns[1])
-				words := splitUniqueWords(&doc)
+				words, times := splitUniqueWords(&doc)
 				// 使用文档位于CSV中的 行数-1（忽略表头）作为文档ID
 				AddWordsToInvertedIndex(words, csvRow.RowNo)
-				AddWordsToForwardIndex(words, csvRow.RowNo)
+				AddWordsToForwardIndex(csvRow.RowNo, words, times)
 				SaveDocument(csvRow.RowNo, &csvRow.Columns[1])
 			}
 			wg.Done()
@@ -34,31 +38,8 @@ func InitWukongIndex() {
 	wg.Wait()
 }
 
-// AddDocToInvertedIndex 为一个文档添加倒排索引
-func AddDocToInvertedIndex(doc *string, id int) {
-	words := splitUniqueWords(doc)
-	AddWordsToInvertedIndex(words, id)
-}
-
-func AddWordsToInvertedIndex(words []string, id int) {
-	for _, keyWord := range words {
-		// 将所有分词保存到倒排索引中
-		SaveWordId(keyWord, id)
-	}
-}
-
-// AddDocToForwardIndex 为一个文档添加正排索引
-func AddDocToForwardIndex(doc *string, id int) {
-	keyWords := splitUniqueWords(doc)
-	AddWordsToForwardIndex(keyWords, id)
-}
-
-func AddWordsToForwardIndex(words []string, id int) {
-	SaveIdWords(id, words)
-}
-
-// splitUniqueWords 对文档进行分词，且所有分词结果不重复
-func splitUniqueWords(doc *string) []string {
+// splitUniqueWords 对文档进行分词，且记录关键词出现的次数
+func splitUniqueWords(doc *string) ([]string, []int) {
 	// 使用 AVL 对分词后的关键词进行去重
 	tree := avl_struct.Init[string]()
 	fenci.ExecAndDoSomething(doc, func(word string) {
@@ -72,5 +53,54 @@ func splitUniqueWords(doc *string) []string {
 		}
 		tree.Insert(word)
 	})
-	return tree.Inorder()
+	nodes := tree.InorderNode()
+	words := make([]string, len(nodes))
+	times := make([]int, len(nodes))
+	for i := 0; i < len(nodes); i++ {
+		words[i] = nodes[i].Val
+		times[i] = nodes[i].Times
+	}
+	return words, times
+}
+
+func ReadWukong() <-chan utils.CsvRow {
+	return utils.ReadCsv(utils.GetPath("/dataset/wukong.csv"), 2, true)
+}
+
+// GetDocument 根据 ID 获取文档
+func GetDocument(id int) ([]byte, bool) {
+	key := []byte(strconv.Itoa(id))
+	return storage.DocDB.Get(key)
+}
+
+// SaveDocument 保存文档至 leveldb 数据库
+func SaveDocument(id int, doc *string) {
+	err := storage.DocDB.Set([]byte(strconv.Itoa(id)), []byte(*doc))
+	if err != nil {
+		log.Println(doc, "存储失败")
+		return
+	}
+}
+
+// SaveWordId 将关键词和对应的文档 ID 存入 leveldb
+func SaveWordId(keyword string, id int) {
+	bytes := []byte(keyword)
+	idList := ""
+
+	// 若已存在于数据库中则在其后追加文档ID
+	// 目前认为每个文档只会执行一次，所以对结果不进行去重
+	// 后面再考虑是否去重
+	value, exists := storage.InvertedIndex.Get(bytes)
+	if exists {
+		idList = string(value)
+	} else {
+		keywords.AddKeyWords(keyword)
+	}
+
+	// 追加文档ID并写入数据库
+	idList += strconv.Itoa(id) + ","
+	err := storage.InvertedIndex.Set(bytes, []byte(idList))
+	if err != nil {
+		log.Fatalln(keyword, " SET 失败")
+	}
 }

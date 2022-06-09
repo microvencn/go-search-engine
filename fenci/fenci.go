@@ -11,7 +11,7 @@ var seg jiebago.Segmenter
 func ReadDict() {
 	err := seg.LoadDictionary(utils.GetPath("/fenci/dictionary.txt"))
 	if err != nil {
-		log.Fatalln("加载词典失败")
+		log.Fatalln("加载词典失败", err)
 		return
 	}
 }

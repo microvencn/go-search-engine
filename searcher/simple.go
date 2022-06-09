@@ -7,7 +7,6 @@ import (
 	"GoSearchEngine/storage"
 	"GoSearchEngine/utils"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -45,7 +44,7 @@ func Simple(query string, offset int, length int) SimpleResult {
 	size := length
 	for i := len(idScores) - 1 - offset; size > 0 && i > -1; i-- {
 		idScore := idScores[i]
-		doc, _ := storage.DocDB.Get([]byte(strconv.Itoa(idScore.Id)))
+		doc, _ := storage.GetDocument(idScore.Id)
 		results[length-size] = simple{
 			Doc:     string(doc),
 			IdScore: idScore,

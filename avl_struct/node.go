@@ -5,19 +5,21 @@ type avlValType interface {
 }
 
 type Node[T avlValType] struct {
-	val    T
+	Val    T
 	left   *Node[T]
 	right  *Node[T]
 	parent *Node[T]
 	height int
+	Times  int
 }
 
 func NewNode[T avlValType](val T) *Node[T] {
 	return &Node[T]{
-		val:    val,
+		Val:    val,
 		left:   nil,
 		right:  nil,
 		height: 1,
 		parent: nil,
+		Times:  1,
 	}
 }
