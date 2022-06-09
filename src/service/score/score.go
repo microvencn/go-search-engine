@@ -1,26 +1,27 @@
 package score
 
 import (
+	"github.com/go-ego/gse/hmm/idf"
 	"go-search-engine/src/service/index"
 	"sort"
 )
 
 type IdScore struct {
 	Id    int
-	Score int
+	Score float64
 }
 type IdScoreList []IdScore
 
 type Counter struct {
-	TargetWords []string
+	TargetWords idf.Segments
 }
 
-func (c Counter) CountById(id int) (score int, success bool) {
+func (c Counter) CountById(id int) (score float64, success bool) {
 	words, exists := index.GetIdWords(id)
 	if !exists {
 		return 0, false
 	}
-	return c.IntersectSize(words.Keywords, words.Times), true
+	return c.wordsScore(words.Keywords, words.Times), true
 }
 
 func (c Counter) SortAfterCount(ids []int) IdScoreList {
@@ -41,26 +42,27 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 	//return sorted
 }
 
-// IntersectSize 计算交集大小，要求 targetWords 和 words 均为有序
-func (c Counter) IntersectSize(words []string, times []int) int {
-	i, j, count := 0, 0, 0
+// wordsScore 计算指定关键词的得分，要求 targetWords 和 words 均为有序
+func (c Counter) wordsScore(words []string, times []int) float64 {
+	i, j := 0, 0
+	var count float64 = 0
 	for {
-		for i < len(c.TargetWords) && c.TargetWords[i] < words[j] {
+		for i < len(c.TargetWords) && c.TargetWords[i].Text() < words[j] {
 			i++
 		}
 		if i == len(c.TargetWords) {
 			break
 		}
 
-		for j < len(words) && words[j] < c.TargetWords[i] {
+		for j < len(words) && words[j] < c.TargetWords[i].Text() {
 			j++
 		}
 		if j == len(words) {
 			break
 		}
 
-		if c.TargetWords[i] == words[j] {
-			count += times[j]
+		if c.TargetWords[i].Text() == words[j] {
+			count += float64(times[j]) + c.TargetWords[i].Weight()*float64(times[j])
 			i++
 			j++
 			if i == len(c.TargetWords) || j == len(words) {

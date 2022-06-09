@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"github.com/go-ego/gse/hmm/idf"
 	"go-search-engine/src/service/fenci"
 	"go-search-engine/src/service/index"
 	"go-search-engine/src/service/score"
@@ -21,15 +22,18 @@ type SimpleResult []simple
 func Simple(query string, offset int, length int) SimpleResult {
 	query = strings.ToLower(query)
 	// 分词并保存至 targets，将所有文档 id 存储至 ids
-	targets := make([]string, 0)
+	targets := make(idf.Segments, 0)
 	ids := make([]int, 0)
-	fenci.ExecAndDoSomething(&query, func(word string) {
-		targets = append(targets, word)
-		id, _ := index.GetWordIds(word)
+
+	words := fenci.WeightTopK(query, 10)
+	for i := 0; i < len(words); i++ {
+		targets = append(targets, words[i])
+		id, _ := index.GetWordIds(words[i].Text())
 		ids = append(ids, id...)
-	})
-	targets = utils.RemoveRepeatedElement(targets)
-	sort.Strings(targets)
+	}
+
+	targets = utils.RemoveRepeatedSegment(targets)
+	sort.Sort(targets)
 	ids = utils.RemoveRepeatedElement(ids)
 
 	// 初始化分数计算器，将用户输入的分词结果作为分数计算依据
