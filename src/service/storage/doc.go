@@ -7,8 +7,7 @@ import (
 var DocDB DocDBList
 
 type DocDBList struct {
-	DBList []*LevelDB
-	Shard  int
+	shardDB
 }
 
 func init() {
@@ -18,35 +17,11 @@ func init() {
 		dbs[i] = Open(getDocShardName(i))
 	}
 	DocDB = DocDBList{
-		Shard:  shard,
-		DBList: dbs,
+		shardDB{
+			Shard:  shard,
+			DBList: dbs,
+		},
 	}
-}
-
-func (d DocDBList) Get(key []byte) ([]byte, bool) {
-	id, err := strconv.Atoi(string(key))
-	if err != nil {
-		return nil, false
-	}
-	shard := d.getShard(id)
-	return d.DBList[shard].Get(key)
-}
-
-func (d DocDBList) Set(key []byte, value []byte) error {
-	id, err := strconv.Atoi(string(key))
-	if err != nil {
-		return err
-	}
-	shard := d.getShard(id)
-	err = d.DBList[shard].Set(key, value)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d DocDBList) getShard(id int) int {
-	return id % d.Shard
 }
 
 // 获取分片数据库所在的路径
@@ -55,18 +30,11 @@ func getDocShardName(shard int) string {
 }
 
 func (d DocDBList) GetAllDoc() <-chan string {
-	ch := make(chan string)
-	go func() {
-		for i := 0; i < d.Shard; i++ {
-			db := d.DBList[i].db
-			iter := db.NewIterator(nil, nil)
-			for iter.Next() {
-				value := iter.Value()
-				ch <- string(value)
-			}
-			iter.Release()
-		}
-		close(ch)
-	}()
-	return ch
+	return d.GetAllValue()
+}
+
+// GetDocument 根据 ID 获取文档
+func GetDocument(id int) ([]byte, bool) {
+	key := []byte(strconv.Itoa(id))
+	return DocDB.Get(key)
 }
