@@ -1,8 +1,8 @@
 package index
 
 import (
-	"GoSearchEngine/fenci"
 	"fmt"
+	"go-search-engine/src/service/fenci"
 	"sort"
 	"testing"
 	"time"

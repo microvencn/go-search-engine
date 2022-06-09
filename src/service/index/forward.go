@@ -1,8 +1,8 @@
 package index
 
 import (
-	"GoSearchEngine/storage"
 	json2 "encoding/json"
+	"go-search-engine/src/service/storage"
 	"log"
 	"strconv"
 )

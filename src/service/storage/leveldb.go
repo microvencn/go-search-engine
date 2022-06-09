@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"GoSearchEngine/utils"
 	"github.com/syndtr/goleveldb/leveldb"
+	"go-search-engine/src/service/utils"
 	"strconv"
 )
 
