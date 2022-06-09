@@ -19,4 +19,4 @@ doc.md
 
 .idea
 # generated files ( goland connect mysql)
-src/service/databse
+src/service/database
