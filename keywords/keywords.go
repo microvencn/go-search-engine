@@ -12,7 +12,11 @@ var File *os.File = nil
 func InitKeyWordsFile() {
 	if File == nil {
 		fileName := utils.GetPath("/database/words.txt")
-		File, _ = os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
+		var err error
+		File, err = os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 

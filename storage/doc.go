@@ -1,6 +1,8 @@
 package storage
 
-import "strconv"
+import (
+	"strconv"
+)
 
 var DocDB DocDBList
 
@@ -50,4 +52,21 @@ func (d DocDBList) getShard(id int) int {
 // 获取分片数据库所在的路径
 func getDocShardName(shard int) string {
 	return GetDBPath() + "/doc_db_" + strconv.Itoa(shard)
+}
+
+func (d DocDBList) GetAllDoc() <-chan string {
+	ch := make(chan string)
+	go func() {
+		for i := 0; i < d.Shard; i++ {
+			db := d.DBList[i].db
+			iter := db.NewIterator(nil, nil)
+			for iter.Next() {
+				value := iter.Value()
+				ch <- string(value)
+			}
+			iter.Release()
+		}
+		close(ch)
+	}()
+	return ch
 }

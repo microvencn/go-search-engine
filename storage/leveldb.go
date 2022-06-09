@@ -47,8 +47,8 @@ func (s *LevelDB) Close() error {
 }
 
 func init() {
-	InvertedIndex = Open("./database/inverted")
-	ForwardIndex = Open("./database/forward")
+	InvertedIndex = Open(utils.GetPath("/database/inverted"))
+	ForwardIndex = Open(utils.GetPath("/database/forward"))
 }
 
 // GetDocument 根据 ID 获取文档

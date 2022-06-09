@@ -5,6 +5,7 @@ import (
 	"GoSearchEngine/fenci"
 	"GoSearchEngine/keywords"
 	"GoSearchEngine/storage"
+	"GoSearchEngine/trie"
 	"GoSearchEngine/utils"
 	"log"
 	"strconv"
@@ -13,12 +14,15 @@ import (
 	"unicode"
 )
 
+var TrieTree *trie.Trie
+
 // InitWukongIndex 初始化悟空数据集索引
 func InitWukongIndex() {
 	keywords.InitKeyWordsFile()
 	defer keywords.CloseKeywordsFile()
 	rows := ReadWukong()
 	wg := sync.WaitGroup{}
+
 	// 开启五个线程同时处理分词
 	// 这也是为什么 ReadCsv 返回 chan 的原因
 	for i := 1; i <= 5; i++ {
@@ -36,6 +40,15 @@ func InitWukongIndex() {
 		}()
 	}
 	wg.Wait()
+	log.Println("索引建立完成")
+}
+
+func InitTrie() {
+	TrieTree = trie.NewTrie()
+	for word := range storage.DocDB.GetAllDoc() {
+		//构造trie树
+		TrieTree.Add(word)
+	}
 }
 
 // splitUniqueWords 对文档进行分词，且记录关键词出现的次数
@@ -101,6 +114,6 @@ func SaveWordId(keyword string, id int) {
 	idList += strconv.Itoa(id) + ","
 	err := storage.InvertedIndex.Set(bytes, []byte(idList))
 	if err != nil {
-		log.Fatalln(keyword, " SET 失败")
+		log.Fatalln(keyword, " SET 失败", err)
 	}
 }
