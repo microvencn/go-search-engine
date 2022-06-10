@@ -40,7 +40,7 @@ func (d shardDB) GetAllKey() <-chan string {
 			db := d.DBList[i].db
 			iter := db.NewIterator(nil, nil)
 			for iter.Next() {
-				ch <- string(iter.Value())
+				ch <- string(iter.Key())
 			}
 			iter.Release()
 		}
