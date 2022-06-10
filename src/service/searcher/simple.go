@@ -1,7 +1,6 @@
 package searcher
 
 import (
-	"github.com/go-ego/gse/hmm/idf"
 	"go-search-engine/src/service/fenci"
 	"go-search-engine/src/service/index"
 	"go-search-engine/src/service/score"
@@ -22,18 +21,35 @@ type SimpleResult []simple
 func Simple(query string, offset int, length int) SimpleResult {
 	query = strings.ToLower(query)
 	// 分词并保存至 targets，将所有文档 id 存储至 ids
-	targets := make(idf.Segments, 0)
+	targets := make(fenci.WordWeights, 0, len(query)/2)
 	ids := make([]int, 0)
+	repeatedMap := make(map[string]bool, len(query))
 
+	// 对用户输入尝试取 TOPK 并去重
 	words := fenci.WeightTopK(query, 10)
 	for i := 0; i < len(words); i++ {
-		targets = append(targets, words[i])
-		id, _ := index.GetWordIds(words[i].Text())
-		ids = append(ids, id...)
+		if !repeatedMap[words[i].Text] {
+			targets = append(targets, words[i])
+			repeatedMap[words[i].Text] = true
+			id, _ := index.GetWordIds(words[i].Text)
+			ids = append(ids, id...)
+		}
 	}
-
-	targets = utils.RemoveRepeatedSegment(targets)
 	sort.Sort(targets)
+
+	if len(words) < 10 {
+		fenci.ExecAndDoSomething(&query, func(word string) {
+			if !repeatedMap[word] {
+				targets = append(targets, fenci.WordWeight{
+					Text:   word,
+					Weight: 1,
+				})
+				repeatedMap[word] = true
+				id, _ := index.GetWordIds(word)
+				ids = append(ids, id...)
+			}
+		})
+	}
 	ids = utils.RemoveRepeatedElement(ids)
 
 	// 初始化分数计算器，将用户输入的分词结果作为分数计算依据

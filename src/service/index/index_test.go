@@ -17,6 +17,7 @@ import (
 func TestInitWukongIndex(t *testing.T) {
 	fenci.ReadDict()
 	InitWukongIndex()
+	//saveIDF()
 }
 
 func forwardSearch() {
@@ -42,6 +43,11 @@ func forwardSearch() {
 			fmt.Println(string(word))
 		}
 	}
+}
+
+func TestInvertedIndex(t *testing.T) {
+	r, _ := storage.InvertedIndex.Get([]byte("图片"))
+	log.Println(r)
 }
 
 func TestTrie_Create(t *testing.T) {

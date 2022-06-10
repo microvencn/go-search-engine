@@ -1,6 +1,8 @@
 package index
 
 import (
+	"bufio"
+	"fmt"
 	"go-search-engine/src/service/avl_struct"
 	"go-search-engine/src/service/fenci"
 	"go-search-engine/src/service/keywords"
@@ -8,6 +10,8 @@ import (
 	"go-search-engine/src/service/trie"
 	"go-search-engine/src/service/utils"
 	"log"
+	"math"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,12 +20,23 @@ import (
 
 var TrieTree *trie.Trie
 
+var docNum int = 0
+
 // InitWukongIndex 初始化悟空数据集索引
 func InitWukongIndex() {
 	keywords.InitKeyWordsFile()
 	defer keywords.CloseKeywordsFile()
 	rows := ReadWukong()
 	wg := sync.WaitGroup{}
+
+	// 记录总的文档数目
+	ch := make(chan int)
+	defer close(ch)
+	go func() {
+		for i := range ch {
+			docNum += i
+		}
+	}()
 
 	// 开启五个线程同时处理分词
 	// 这也是为什么 ReadCsv 返回 chan 的原因
@@ -30,10 +45,10 @@ func InitWukongIndex() {
 		go func() {
 			for csvRow := range rows {
 				doc := strings.ToLower(csvRow.Columns[1])
-				words, times := splitUniqueWords(&doc)
+				ch <- 1
+				words, _ := splitUniqueWords(&doc)
 				// 使用文档位于CSV中的 行数-1（忽略表头）作为文档ID
 				AddWordsToInvertedIndex(words, csvRow.RowNo)
-				AddWordsToForwardIndex(csvRow.RowNo, words, times)
 				SaveDocument(csvRow.RowNo, &csvRow.Columns[1])
 			}
 			wg.Done()
@@ -41,6 +56,34 @@ func InitWukongIndex() {
 	}
 	wg.Wait()
 	log.Println("索引建立完成")
+
+	saveIDF()
+	log.Println("IDF 建立完成")
+
+	rows = ReadWukong()
+	fenci.ReadIDF()
+	for i := 1; i <= 5; i++ {
+		wg.Add(1)
+		go func() {
+			for csvRow := range rows {
+				doc := strings.ToLower(csvRow.Columns[1])
+				ch <- 1
+				words, times := splitUniqueWords(&doc)
+				// 存储正排索引
+				topK := fenci.WeightTopK(doc, 10)
+				topKWords := make([]string, len(topK))
+				topKWeights := make([]float64, len(topK))
+				for j := 0; j < len(topK); j++ {
+					topKWords[j] = topK[j].Text
+					topKWeights[j] = topK[j].Weight
+				}
+				AddWordsToForwardIndex(csvRow.RowNo, words, times, topKWords, topKWeights)
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	log.Println("正排索引建立完成")
 }
 
 func InitTrie() {
@@ -116,4 +159,35 @@ func SaveWordId(keyword string, id int) {
 	if err != nil {
 		log.Fatalln(keyword, " SET 失败", err)
 	}
+}
+
+func saveIDF() {
+	fileName := utils.GetPath("/database/idf.txt")
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
+	defer file.Close()
+	if err != nil {
+		log.Println("idf file open failed", err)
+		return
+	}
+	writer := bufio.NewWriter(file)
+	defer writer.Flush()
+
+	ch := storage.InvertedIndex.GetAllKey()
+	for key := range ch {
+		docs := storage.InvertedIndex.GetDocIds([]byte(key))
+		if len(docs) == 0 {
+			return
+		}
+
+		// 计算逆文档频率 末尾加2是因为gse默认最小词频为2 且在使用idf的时候无法修改seg的配置
+		// 在文档数据集比较小的时候经常出现 idf 小于 2 的情况，故只能出此下策
+		idf := math.Log10(float64(docNum)/float64(len(docs))+1) + 2
+
+		_, err = writer.WriteString(fmt.Sprintf("%s %f\n", key, idf))
+		if err != nil {
+			log.Printf("写入idf失败: %s\n", err)
+			return
+		}
+	}
+	fenci.ReadIDF()
 }
