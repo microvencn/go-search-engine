@@ -8,15 +8,19 @@ import (
 )
 
 type ForwardStore struct {
-	Keywords []string `json:"keywords"`
-	Times    []int    `json:"times"`
+	Keywords    []string  `json:"keywords"`
+	Times       []int     `json:"times"`
+	TopKWords   []string  `json:"top_k_words"`
+	TopKWeights []float64 `json:"top_k_weights"`
 }
 
 // AddWordsToForwardIndex 为词列表和次数列表添加正排索引
-func AddWordsToForwardIndex(id int, words []string, times []int) {
+func AddWordsToForwardIndex(id int, words []string, times []int, topKWords []string, topKWeights []float64) {
 	f := ForwardStore{
 		words,
 		times,
+		topKWords,
+		topKWeights,
 	}
 	f.save(id)
 }

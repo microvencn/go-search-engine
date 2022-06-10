@@ -1,26 +1,28 @@
 package score
 
 import (
+	"go-search-engine/src/service/fenci"
 	"go-search-engine/src/service/index"
+	"math"
 	"sort"
 )
 
 type IdScore struct {
 	Id    int
-	Score int
+	Score float64
 }
 type IdScoreList []IdScore
 
 type Counter struct {
-	TargetWords []string
+	TargetWords fenci.WordWeights
 }
 
-func (c Counter) CountById(id int) (score int, success bool) {
+func (c Counter) CountById(id int) (score float64, success bool) {
 	words, exists := index.GetIdWords(id)
 	if !exists {
 		return 0, false
 	}
-	return c.IntersectSize(words.Keywords, words.Times), true
+	return c.CosSimilarity(words.TopKWords, words.TopKWeights), true
 }
 
 func (c Counter) SortAfterCount(ids []int) IdScoreList {
@@ -41,26 +43,27 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 	//return sorted
 }
 
-// IntersectSize 计算交集大小，要求 targetWords 和 words 均为有序
-func (c Counter) IntersectSize(words []string, times []int) int {
-	i, j, count := 0, 0, 0
+// Intersection 用交集大小计算指定关键词的得分，要求 targetWords 和 words 均为有序
+func (c Counter) Intersection(words []string, times []int) float64 {
+	i, j := 0, 0
+	var count float64 = 0
 	for {
-		for i < len(c.TargetWords) && c.TargetWords[i] < words[j] {
+		for i < len(c.TargetWords) && c.TargetWords[i].Text < words[j] {
 			i++
 		}
 		if i == len(c.TargetWords) {
 			break
 		}
 
-		for j < len(words) && words[j] < c.TargetWords[i] {
+		for j < len(words) && words[j] < c.TargetWords[i].Text {
 			j++
 		}
 		if j == len(words) {
 			break
 		}
 
-		if c.TargetWords[i] == words[j] {
-			count += times[j]
+		if c.TargetWords[i].Text == words[j] {
+			count++
 			i++
 			j++
 			if i == len(c.TargetWords) || j == len(words) {
@@ -69,6 +72,47 @@ func (c Counter) IntersectSize(words []string, times []int) int {
 		}
 	}
 	return count
+}
+
+// CosSimilarity 计算TopK 的余弦相似度
+func (c Counter) CosSimilarity(words []string, weights []float64) float64 {
+	length := len(words) + len(c.TargetWords)
+	// m 存储单词在向量中对应的维度
+	m := make(map[string]int, length)
+	vIndex := 0
+	for _, word := range words {
+		m[word] = vIndex
+		vIndex += 1
+	}
+	for _, word := range c.TargetWords {
+		if _, ok := m[word.Text]; ok {
+			continue
+		}
+		m[word.Text] = vIndex
+		vIndex += 1
+	}
+
+	v1, v2 := make([]float64, length), make([]float64, length)
+	for i := 0; i < len(words); i++ {
+		word := words[i]
+		v1[m[word]] = weights[i]
+	}
+	for _, word := range c.TargetWords {
+		v2[m[word.Text]] = word.Weight
+	}
+
+	var v1v2 float64 = 0
+	for i := 0; i < length; i++ {
+		v1v2 += v1[i] * v2[i]
+	}
+	var absv1, absv2 float64 = 0, 0
+	for i := 0; i < length; i++ {
+		absv1 += v1[i] * v1[i]
+		absv2 += v2[i] * v2[i]
+	}
+	absv1 = math.Sqrt(absv1)
+	absv2 = math.Sqrt(absv2)
+	return v1v2 / (absv2 * absv1)
 }
 
 func (p IdScoreList) Less(i, j int) bool {
