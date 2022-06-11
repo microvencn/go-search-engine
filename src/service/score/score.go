@@ -35,12 +35,8 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 		}
 	}
 	sort.Sort(scores)
+	reverse(scores)
 	return scores
-	//sorted := make([]int, len(ids))
-	//for i := 0; i < len(ids); i++ {
-	//	sorted[i] = scores[i].id
-	//}
-	//return sorted
 }
 
 // Intersection 用交集大小计算指定关键词的得分，要求 targetWords 和 words 均为有序
@@ -125,4 +121,10 @@ func (p IdScoreList) Len() int {
 
 func (p IdScoreList) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
+}
+
+func reverse(s IdScoreList) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
 }
