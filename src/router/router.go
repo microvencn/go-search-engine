@@ -25,7 +25,7 @@ func RegisterRouter(r *gin.Engine) {
 	g.GET("/auth/whoami", controller.WhoAmI)
 
 	g.GET("/search", search.SimpleSearch)
-
+	g.GET("/auto", search.AutoComplete)
 	// 数据管理
 	//g.GET("/data", controller.GetData)
 	//g.GET("/data/list", controller.GetDataList)

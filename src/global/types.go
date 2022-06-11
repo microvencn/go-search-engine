@@ -200,3 +200,7 @@ type SearchResponse struct {
 	Total int                   `json:"total"`
 	Data  searcher.SimpleResult `json:"data"`
 }
+
+type AutoCompleteResponse struct {
+	Data []string `json:"data"`
+}
