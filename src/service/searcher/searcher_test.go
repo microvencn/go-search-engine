@@ -32,8 +32,15 @@ func TestSimple(t *testing.T) {
 	for i := 0; i < len(r); i++ {
 		fmt.Println(r[i].Text, " ", r[i].Weight)
 	}
-
+	fmt.Println("==============================")
 	results := Simple("百度图片", 0, 20)
+	for i := 0; i < len(results); i++ {
+		fmt.Printf("%f %s\n", results[i].Score, results[i].Doc)
+	}
+	fmt.Println("==============================")
+	filter := make([]string, 2)
+	filter[0] = "图片"
+	results = SimpleWithFilter("百度图片", 0, 20, filter)
 	for i := 0; i < len(results); i++ {
 		fmt.Printf("%f %s\n", results[i].Score, results[i].Doc)
 	}
