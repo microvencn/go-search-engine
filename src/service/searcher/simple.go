@@ -30,12 +30,13 @@ func simpleSearch(query string) score.IdScoreList {
 		if !repeatedMap[words[i].Text] {
 			targets = append(targets, words[i])
 			repeatedMap[words[i].Text] = true
-			id, _ := index.GetWordIds(words[i].Text)
+			id, _ := index.GetSimpleWordIds(words[i].Text)
 			ids = append(ids, id...)
 		}
 	}
 	sort.Sort(targets)
 
+	// 关键词数量小于 10 时，取停止词等补充
 	if len(words) < 10 {
 		fenci.ExecAndDoSomething(&query, func(word string) {
 			if !repeatedMap[word] {

@@ -78,11 +78,13 @@ func InitWukongIndex() {
 					topKWeights[j] = topK[j].Weight
 				}
 				AddWordsToForwardIndex(csvRow.RowNo, words, times, topKWords, topKWeights)
+				sig.AddWordsIdToSimpleInverted(topKWords, csvRow.RowNo)
 			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
+	sig.Flush()
 	log.Println("正排索引建立完成")
 }
 

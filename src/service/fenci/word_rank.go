@@ -60,3 +60,11 @@ func (wws WordWeights) normalize(min float64, max float64, val float64) float64 
 func Idf(key string) (float64, string, bool) {
 	return te.Idf.Freq(key)
 }
+
+func (wws WordWeights) OnlyText() []string {
+	texts := make([]string, len(wws))
+	for i := 0; i < len(wws); i++ {
+		texts[i] = wws[i].Text
+	}
+	return texts
+}
