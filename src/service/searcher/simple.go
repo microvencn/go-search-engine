@@ -11,7 +11,7 @@ import (
 )
 
 type simple struct {
-	Doc string
+	Doc string `json:"doc"`
 	score.IdScore
 }
 
@@ -78,23 +78,23 @@ func idScoresToSimpleResult(idScores score.IdScoreList) SimpleResult {
 }
 
 // Simple 简单搜索，offset 搜索结果的偏移，length 为需要的结果数量
-func Simple(query string, offset int, length int) SimpleResult {
+func Simple(query string, offset int, length int) (int, SimpleResult) {
 	if offset < 0 {
-		return nil
+		return 0, nil
 	}
 	idScores := simpleSearch(query)
 	// 生成搜索结果
-	return idScoresToSimpleResult(idScores[offset:utils.MinInt(length, len(idScores)-offset)])
+	return len(idScores), idScoresToSimpleResult(idScores[offset:utils.MinInt(length, len(idScores)-offset)])
 }
 
-func SimpleWithFilter(query string, offset int, length int, filter []string) SimpleResult {
+func SimpleWithFilter(query string, offset int, length int, filter []string) (int, SimpleResult) {
 	if offset < 0 {
-		return nil
+		return 0, nil
 	}
 	idScores := simpleSearch(query)
 
 	// 生成搜索结果
-	results := make(score.IdScoreList, 0, utils.MinInt(length, 0))
+	results := make(score.IdScoreList, 0, utils.MaxInt(length, 0))
 	size := length
 	// 过滤搜索结果
 	if filter != nil {
@@ -114,5 +114,5 @@ func SimpleWithFilter(query string, offset int, length int, filter []string) Sim
 		results = append(results, idScores[i])
 		size--
 	}
-	return idScoresToSimpleResult(results)
+	return len(idScores), idScoresToSimpleResult(results)
 }

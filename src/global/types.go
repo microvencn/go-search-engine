@@ -1,5 +1,7 @@
 package types
 
+import "go-search-engine/src/service/searcher"
+
 // 说明：
 // 1. 所提到的「位数」均以字节长度为准
 // 2. 所有的 ID 均为 int64（以 string 方式表现）
@@ -185,4 +187,16 @@ type GetDataListResponse struct {
 	Data struct {
 		MemberList []TData
 	}
+}
+
+type SearchRequest struct {
+	Page     int      `json:"page"`
+	PageSize int      `json:"page_size"`
+	Query    string   `json:"query"`
+	Filter   []string `json:"filter"`
+}
+
+type SearchResponse struct {
+	Total int                   `json:"total"`
+	Data  searcher.SimpleResult `json:"data"`
 }

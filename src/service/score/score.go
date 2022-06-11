@@ -8,8 +8,8 @@ import (
 )
 
 type IdScore struct {
-	Id    int
-	Score float64
+	Id    int     `json:"id"`
+	Score float64 `json:"score"`
 }
 type IdScoreList []IdScore
 
