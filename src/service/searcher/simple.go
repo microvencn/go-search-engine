@@ -5,6 +5,7 @@ import (
 	"go-search-engine/src/service/index"
 	"go-search-engine/src/service/score"
 	"go-search-engine/src/service/storage"
+	"go-search-engine/src/service/trie"
 	"go-search-engine/src/service/utils"
 	"sort"
 	"strings"
@@ -16,6 +17,8 @@ type simple struct {
 }
 
 type SimpleResult []simple
+
+var Tree *trie.Trie
 
 func simpleSearch(query string) score.IdScoreList {
 	query = strings.ToLower(query)
@@ -92,7 +95,8 @@ func SimpleWithFilter(query string, offset int, length int, filter []string) (in
 		return 0, nil
 	}
 	idScores := simpleSearch(query)
-
+	//搜索结果加入前缀树
+	Tree.Add(query)
 	// 生成搜索结果
 	results := make(score.IdScoreList, 0, utils.MaxInt(length, 0))
 	size := length
@@ -115,4 +119,11 @@ func SimpleWithFilter(query string, offset int, length int, filter []string) (in
 		size--
 	}
 	return len(idScores), idScoresToSimpleResult(results)
+}
+
+func SimpleTrieSearch(query string) *trie.WordList {
+	wordList := Tree.Search(query, -1)
+	sort.Sort(wordList)
+	*wordList = (*wordList)[0:10]
+	return wordList
 }

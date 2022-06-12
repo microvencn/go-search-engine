@@ -1,8 +1,14 @@
 package trie
 
 import (
+	"bufio"
 	"container/heap"
+	"encoding/json"
 	"fmt"
+	"go-search-engine/src/service/utils"
+	"io/ioutil"
+	"log"
+	"os"
 )
 
 // 字典树：
@@ -20,7 +26,7 @@ type Node struct {
 	//  若干个子节点: 字符：节点
 	Children map[rune]*Node
 	//  表示以该节点为结尾字符的单词数量（用来做相关搜索）
-	cntWord int
+	CntWord int
 }
 
 // Add 给子节点 列表添加新的节点
@@ -66,7 +72,7 @@ func (t *Trie) Add(word string) {
 		cur = cur.Children[c]
 	}
 	// 将最后一个节点字符的数量+1
-	cur.cntWord++
+	cur.CntWord++
 }
 
 // Contains 判断是否包含指定的单词
@@ -122,8 +128,8 @@ func (t *Trie) Search(word string, limit int) *WordList {
 			path := make([]rune, len(q.path))
 			copy(path, q.path)
 			path = append(path, key)
-			if node.cntWord > 0 {
-				wl.Push(&RelatedWord{string(path), node.cntWord, -1})
+			if node.CntWord > 0 {
+				wl.Push(&RelatedWord{string(path), node.CntWord, -1})
 			}
 			queue = append(queue, queueNode{node, path})
 
@@ -132,14 +138,39 @@ func (t *Trie) Search(word string, limit int) *WordList {
 	return &wl
 }
 
-//func dfs(relatedWord *[]RelatedWord, cur *Node, prefix *[]rune, cnt int, limit int) {
-//	if cur == nil || cnt > limit {
-//		return
-//	} else if cur.cntWord > 0 {
-//
-//	}
-//
-//	for _, c := range cur.Children {
-//
-//	}
-//}
+func WriteTrieFile(trie *Trie) {
+	b, _ := json.Marshal(trie)
+	fileName := utils.GetPath("/database/trie.txt")
+	File, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer File.Close()
+	writer := bufio.NewWriter(File)
+	_, err = writer.Write(b)
+	if err != nil {
+		log.Printf("前缀树持久化失败！")
+		return
+	}
+	writer.Flush()
+}
+func ReadTrieFile() *Trie {
+	fileName := utils.GetPath("/database/trie.txt")
+	//fileName := "./database/trie.txt"
+	openFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0777)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer openFile.Close()
+	reader := bufio.NewReader(openFile)
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		log.Printf("前缀树读取失败！")
+		return nil
+	}
+	var trie Trie
+	json.Unmarshal(b, &trie)
+	return &trie
+}

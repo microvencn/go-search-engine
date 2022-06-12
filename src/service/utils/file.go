@@ -9,6 +9,7 @@ import (
 
 func GetPath(path string) string {
 	workDir, _ := os.Getwd()
+	//fmt.Println(workDir)
 	return workDir + "/src/service" + path
 }
 

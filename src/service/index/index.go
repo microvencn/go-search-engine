@@ -86,12 +86,13 @@ func InitWukongIndex() {
 	log.Println("正排索引建立完成")
 }
 
-func InitTrie() {
+func InitTrie() *trie.Trie {
 	TrieTree = trie.NewTrie()
 	for word := range storage.DocDB.GetAllDoc() {
 		//构造trie树
 		TrieTree.Add(word)
 	}
+	return TrieTree
 }
 
 // splitUniqueWords 对文档进行分词，且记录关键词出现的次数

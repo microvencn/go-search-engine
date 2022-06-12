@@ -21,3 +21,10 @@ func SimpleSearch(c *gin.Context) {
 	c.JSON(http.StatusOK, global.SearchResponse{Total: total, Data: data})
 	return
 }
+
+func TrieSearch(c *gin.Context) {
+	query := c.Query("query")
+	trieList := searcher.SimpleTrieSearch(query)
+	c.JSON(http.StatusOK, trieList)
+	return
+}
