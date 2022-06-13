@@ -1,16 +1,43 @@
 package index
 
 import (
+	"bytes"
+	"fmt"
 	"go-search-engine/src/service/storage"
+	"log"
 	"strconv"
 	"strings"
+	"sync"
 )
 
-func AddWordsToInvertedIndex(words []string, id int) {
+type InvertedIndexGen struct {
+	cache *sync.Map
+}
+
+func (i *InvertedIndexGen) AddWordsToInvertedIndex(words []string, id int) {
 	for _, keyWord := range words {
 		// 将所有分词保存到倒排索引中
-		SaveWordId(keyWord, id)
+		if len(keyWord) == 0 {
+			continue
+		}
+		i.SaveToCache(keyWord, id)
 	}
+}
+
+func (i *InvertedIndexGen) SaveToCache(word string, id int) {
+	v, _ := i.cache.LoadOrStore(word, &bytes.Buffer{})
+	v.(*bytes.Buffer).WriteString(fmt.Sprintf("%d,", id))
+}
+
+func (i *InvertedIndexGen) Flush() {
+	i.cache.Range(func(key, val any) bool {
+		err := storage.InvertedIndex.Set([]byte(key.(string)), val.(*bytes.Buffer).Bytes())
+		if err != nil {
+			log.Println("ivertered index flush set err: ", err)
+			return false
+		}
+		return true
+	})
 }
 
 // GetWordIds 获取关键词索引的 ID 列表

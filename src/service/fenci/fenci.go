@@ -50,7 +50,7 @@ func Cut(doc string) []string {
 func ReadIDF() {
 	te.WithGse(jieba)
 	err := te.LoadIdf(utils.GetPath("/database/idf.txt"))
-
+	te.LoadStopWords(utils.GetPath("/dataset/baidu_stopwords.txt"))
 	if err != nil {
 		//log.Fatalln("加载 IDF 词典失败: ", err)
 		return

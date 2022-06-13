@@ -33,7 +33,7 @@ func (d InvertedIndexDBList) getShard(key []byte) int {
 	}
 }
 
-func (d InvertedIndexDBList) GetDocIds(key []byte) []string {
+func (d InvertedIndexDBList) GetDocStrIds(key []byte) []string {
 	docs, exists := d.Get(key)
 	if !exists {
 		return make([]string, 0)
@@ -42,7 +42,28 @@ func (d InvertedIndexDBList) GetDocIds(key []byte) []string {
 	return ids
 }
 
+func (d InvertedIndexDBList) GetDocIds(key []byte) []int {
+	docs, exists := d.Get(key)
+	if !exists {
+		return make([]int, 0)
+	}
+	return TransValueToIds(string(docs))
+}
+
 // 获取分片数据库所在的路径
 func getInvertedIndexShardName(shard int) string {
 	return GetDBPath() + "/inverted_index_" + strconv.Itoa(shard)
+}
+
+func TransValueToIds(value string) []int {
+	idStrings := strings.Split(value, ",")
+	ids := make([]int, 0, len(idStrings)-1)
+	for i := 0; i < len(idStrings)-1; i++ {
+		id, err := strconv.Atoi(idStrings[i])
+		if err != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	return ids
 }

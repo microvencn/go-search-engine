@@ -27,20 +27,20 @@ func TestSimple(t *testing.T) {
 	//	TargetWords: s,
 	//}
 	//log.Println(counter.CosSimilarity(w, we))
-
-	r := fenci.WeightTopK("百度图片", 10)
+	text := "a51 "
+	r := fenci.WeightTopK(text, 10)
 	for i := 0; i < len(r); i++ {
 		fmt.Println(r[i].Text, " ", r[i].Weight)
 	}
 	fmt.Println("==============================")
-	_, results := Simple("百度图片", 0, 20)
+	_, results := Simple(text, 0, 20)
 	for i := 0; i < len(results); i++ {
 		fmt.Printf("%f %s\n", results[i].Score, results[i].Doc)
 	}
 	fmt.Println("==============================")
 	filter := make([]string, 2)
 	filter[0] = "图片"
-	_, results = SimpleWithFilter("百度图片", 0, 20, filter)
+	_, results = SimpleWithFilter(text, 0, 20, filter)
 	for i := 0; i < len(results); i++ {
 		fmt.Printf("%f %s\n", results[i].Score, results[i].Doc)
 	}

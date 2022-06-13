@@ -1,6 +1,9 @@
 package types
 
-import "go-search-engine/src/service/searcher"
+import (
+	"go-search-engine/src/service/searcher"
+	"go-search-engine/src/service/storage"
+)
 
 // 说明：
 // 1. 所提到的「位数」均以字节长度为准
@@ -199,4 +202,12 @@ type SearchRequest struct {
 type SearchResponse struct {
 	Total int                   `json:"total"`
 	Data  searcher.SimpleResult `json:"data"`
+}
+
+type AutoCompleteResponse struct {
+	Data []string `json:"data"`
+}
+
+type RelatedSearchResponse struct {
+	Data storage.RelatedWords `json:"data"`
 }

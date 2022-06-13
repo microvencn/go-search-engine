@@ -28,6 +28,9 @@ func InitWukongIndex() {
 	defer keywords.CloseKeywordsFile()
 	rows := ReadWukong()
 	wg := sync.WaitGroup{}
+	iig := InvertedIndexGen{
+		cache: &sync.Map{},
+	}
 
 	// 记录总的文档数目
 	ch := make(chan int)
@@ -40,34 +43,38 @@ func InitWukongIndex() {
 
 	// 开启五个线程同时处理分词
 	// 这也是为什么 ReadCsv 返回 chan 的原因
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 6; i++ {
 		wg.Add(1)
 		go func() {
 			for csvRow := range rows {
+				csvRow.Columns[1] = utils.RemoveSpace(csvRow.Columns[1])
+				if len(csvRow.Columns) == 0 {
+					continue
+				}
 				doc := strings.ToLower(csvRow.Columns[1])
 				ch <- 1
 				words, _ := splitUniqueWords(&doc)
 				// 使用文档位于CSV中的 行数-1（忽略表头）作为文档ID
-				AddWordsToInvertedIndex(words, csvRow.RowNo)
-				SaveDocument(csvRow.RowNo, &csvRow.Columns[1])
+				iig.AddWordsToInvertedIndex(words, csvRow.TotalRowNo)
+				SaveDocument(csvRow.TotalRowNo, &csvRow.Columns[1])
 			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
-	log.Println("索引建立完成")
+	iig.Flush()
+	log.Println("倒排索引建立完成")
 
 	saveIDF()
 	log.Println("IDF 建立完成")
 
 	rows = ReadWukong()
 	fenci.ReadIDF()
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 6; i++ {
 		wg.Add(1)
 		go func() {
 			for csvRow := range rows {
 				doc := strings.ToLower(csvRow.Columns[1])
-				ch <- 1
 				words, times := splitUniqueWords(&doc)
 				// 存储正排索引
 				topK := fenci.WeightTopK(doc, 10)
@@ -77,21 +84,24 @@ func InitWukongIndex() {
 					topKWords[j] = topK[j].Text
 					topKWeights[j] = topK[j].Weight
 				}
-				AddWordsToForwardIndex(csvRow.RowNo, words, times, topKWords, topKWeights)
+				AddWordsToForwardIndex(csvRow.TotalRowNo, words, times, topKWords, topKWeights)
+				sig.AddWordsIdToSimpleInverted(topKWords, csvRow.TotalRowNo)
 			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
+	sig.Flush()
 	log.Println("正排索引建立完成")
+	log.Println(docNum)
 }
 
 func InitTrie() {
 	TrieTree = trie.NewTrie()
-	for word := range storage.DocDB.GetAllDoc() {
-		//构造trie树
-		TrieTree.Add(word)
-	}
+	//for word := range storage.DocDB.DBList[1].Get() {
+	//	//构造trie树
+	//	TrieTree.Add(word)
+	//}
 }
 
 // splitUniqueWords 对文档进行分词，且记录关键词出现的次数
@@ -120,7 +130,12 @@ func splitUniqueWords(doc *string) ([]string, []int) {
 }
 
 func ReadWukong() <-chan utils.CsvRow {
-	return utils.ReadCsv(utils.GetPath("/dataset/wukong.csv"), 2, true)
+	files := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		files[i] = utils.GetPath(fmt.Sprintf("/dataset/wukong_100m_%d.csv", i))
+	}
+	//return utils.ReadCsv(2, true, utils.GetPath("/dataset/wukong.csv"))
+	return utils.ReadCsv(2, true, files...)
 }
 
 // GetDocument 根据 ID 获取文档
@@ -159,6 +174,8 @@ func SaveWordId(keyword string, id int) {
 	if err != nil {
 		log.Fatalln(keyword, " SET 失败", err)
 	}
+
+	fmt.Printf("%d\n", docNum)
 }
 
 func saveIDF() {
@@ -172,9 +189,12 @@ func saveIDF() {
 	writer := bufio.NewWriter(file)
 	defer writer.Flush()
 
-	ch := storage.InvertedIndex.GetAllKey()
-	for key := range ch {
-		docs := storage.InvertedIndex.GetDocIds([]byte(key))
+	ch := storage.InvertedIndex.GetAllKeyValue()
+	line := 0
+	for kv := range ch {
+		key := kv.Key()
+		docs := storage.TransValueToIds(kv.Value())
+		//docs := storage.InvertedIndex.GetDocStrIds([]byte(key))
 		if len(docs) == 0 {
 			return
 		}
@@ -182,12 +202,28 @@ func saveIDF() {
 		// 计算逆文档频率 末尾加2是因为gse默认最小词频为2 且在使用idf的时候无法修改seg的配置
 		// 在文档数据集比较小的时候经常出现 idf 小于 2 的情况，故只能出此下策
 		idf := math.Log10(float64(docNum)/float64(len(docs))+1) + 2
-
-		_, err = writer.WriteString(fmt.Sprintf("%s %f\n", key, idf))
+		l := fmt.Sprintf("%s %f\n", key, idf)
+		if l == "\n" {
+			continue
+		}
+		_, err = writer.WriteString(l)
 		if err != nil {
 			log.Printf("写入idf失败: %s\n", err)
 			return
 		}
+		line++
 	}
 	fenci.ReadIDF()
+}
+
+func shouldStoreIDF(word string) bool {
+	runes := []rune(word)
+	should := true
+	for _, arune := range runes {
+		if unicode.IsPunct(arune) || unicode.IsSpace(arune) || unicode.IsNumber(arune) || arune <= 64 {
+			should = false
+			break
+		}
+	}
+	return should
 }
