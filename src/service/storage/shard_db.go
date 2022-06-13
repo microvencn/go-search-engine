@@ -1,6 +1,9 @@
 package storage
 
-import "strconv"
+import (
+	"go-search-engine/src/service/utils"
+	"strconv"
+)
 
 type ShardDBI interface {
 	Get()
@@ -41,6 +44,25 @@ func (d shardDB) GetAllKey() <-chan string {
 			iter := db.NewIterator(nil, nil)
 			for iter.Next() {
 				ch <- string(iter.Key())
+			}
+			iter.Release()
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func (d shardDB) GetAllKeyValue() <-chan *utils.KeyValue[string, string] {
+	ch := make(chan *utils.KeyValue[string, string])
+	go func() {
+		for i := 0; i < d.Shard; i++ {
+			db := d.DBList[i].db
+			iter := db.NewIterator(nil, nil)
+			for iter.Next() {
+				kv := utils.KeyValue[string, string]{}
+				kv.SetKey((string)(iter.Key()))
+				kv.SetValue((string)(iter.Value()))
+				ch <- &kv
 			}
 			iter.Release()
 		}

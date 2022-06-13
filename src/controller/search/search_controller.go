@@ -4,10 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	global "go-search-engine/src/global"
 	"go-search-engine/src/service/index"
+	"go-search-engine/src/service/related_search"
 	"go-search-engine/src/service/searcher"
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 func SimpleSearch(c *gin.Context) {
@@ -19,7 +21,16 @@ func SimpleSearch(c *gin.Context) {
 		return
 	}
 	offset := (page - 1) * pageSize
-	total, data := searcher.SimpleWithFilter(query, offset, pageSize, make([]string, 0))
+	filter := strings.Split(c.Query("filter"), ",")
+	if len(filter) == 0 {
+		filter = nil
+	} else {
+		for i := 0; i < len(filter); i++ {
+			filter[i] = strings.Replace(filter[i], " ", "", -1)
+			filter[i] = strings.Replace(filter[i], "\n", "", -1)
+		}
+	}
+	total, data := searcher.SimpleWithFilter(query, offset, pageSize, filter)
 	c.JSON(http.StatusOK, global.SearchResponse{Total: total, Data: data})
 	return
 }
@@ -43,4 +54,14 @@ func AutoComplete(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, global.AutoCompleteResponse{Data: result})
+}
+
+func RelatedWords(c *gin.Context) {
+	query := c.Query("query")
+	if query == "" {
+		c.JSON(http.StatusOK, global.ResponseMeta{})
+		return
+	}
+	data := related_search.GetQueryRelatedWords(query)
+	c.JSON(http.StatusOK, global.RelatedSearchResponse{Data: data})
 }

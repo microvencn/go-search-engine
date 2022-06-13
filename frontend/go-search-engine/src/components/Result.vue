@@ -34,7 +34,6 @@ export default {
 <style scoped>
 .result {
   text-align: left;
-  padding-left: 1.5rem;
   padding-top: 1.5rem;
 }
 

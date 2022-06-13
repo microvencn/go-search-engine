@@ -17,7 +17,7 @@ type HasValue interface {
 }
 
 func RemoveRepeated[T HasValue](s []T) []T {
-	result := make([]T, len(s))
+	result := make([]T, 0, len(s))
 	m := make(map[string]bool)
 	for _, v := range s {
 		if _, ok := m[v.Value()]; !ok {
@@ -26,37 +26,6 @@ func RemoveRepeated[T HasValue](s []T) []T {
 		}
 	}
 	return result
-}
-
-// Intersection 计算交集大小，要求 source 和 target 均有序
-func Intersection(source []string, target []string) int {
-	i, j := 0, 0
-	var count int = 0
-	for {
-		for i < len(target) && target[i] < source[j] {
-			i++
-		}
-		if i == len(target) {
-			break
-		}
-
-		for j < len(source) && source[j] < target[i] {
-			j++
-		}
-		if j == len(source) {
-			break
-		}
-
-		if target[i] == source[j] {
-			count++
-			i++
-			j++
-			if i == len(target) || j == len(source) {
-				break
-			}
-		}
-	}
-	return count
 }
 
 // HasIntersection 判断是否有交集，要求 source 和 target 均有序
@@ -82,4 +51,34 @@ func HasIntersection(source []string, target []string) bool {
 		}
 	}
 	return false
+}
+
+// CountIntersection 获取交集大小，要求 source 和 target 均有序
+func CountIntersection[T int | string](source []T, target []T) int {
+	i, j, count := 0, 0, 0
+	for {
+		for i < len(target) && target[i] < source[j] {
+			i++
+		}
+		if i == len(target) {
+			break
+		}
+
+		for j < len(source) && source[j] < target[i] {
+			j++
+		}
+		if j == len(source) {
+			break
+		}
+
+		if target[i] == source[j] {
+			count++
+			i++
+			j++
+			if j == len(source) || i == len(target) {
+				break
+			}
+		}
+	}
+	return count
 }

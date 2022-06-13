@@ -46,8 +46,12 @@ func forwardSearch() {
 }
 
 func TestInvertedIndex(t *testing.T) {
-	r, _ := storage.InvertedIndex.Get([]byte("图片"))
-	log.Println(r)
+	r := storage.InvertedIndex.GetDocIds([]byte("a51"))
+	for _, d := range r {
+		doc, _ := GetDocument(d)
+		fmt.Println(string(doc))
+	}
+	fmt.Println(len(r))
 }
 
 func TestTrie_Create(t *testing.T) {

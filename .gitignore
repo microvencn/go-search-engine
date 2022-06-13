@@ -21,3 +21,5 @@ doc.md
 # generated files ( goland connect mysql)
 src/service/database
 node_modules/
+
+src/service/dataset/wukong*.csv

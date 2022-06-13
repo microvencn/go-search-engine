@@ -30,11 +30,17 @@ service.interceptors.response.use(
         return response.data
     },
     error => {
-        if (error.response.status === 401) {
-            removeToken()
-        }
+        // this.$message.error("请求失败请重试")
         return Promise.reject(error)
     }
 )
 
 export default service
+
+export const picRequest = axios.create({
+    // baseURL: 'http://43.138.211.125:9999',
+    baseURL: 'http://110.42.237.111:9999',
+    withCredentials: true,
+    timeout: 5000 // request timeout
+})
+

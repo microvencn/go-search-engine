@@ -26,7 +26,7 @@ export default {
       this.$refs.i.focus()
     },
     submit() {
-      this.$router.push({name: "result", query: {query: this.query}})
+      this.$emit("submit", this.query)
     },
     querySearch(prefix, cb) {
       request({
