@@ -6,7 +6,7 @@
         <el-form-item>
           <template #label>
           </template>
-          <SearchInput ref="i" />
+          <SearchInput @submit="redirect" ref="i" />
         </el-form-item>
       </el-form>
     </el-col>
@@ -27,6 +27,11 @@ export default {
   },
   mounted() {
     this.$refs.i.focus()
+  },
+  methods: {
+    redirect(str) {
+      this.$router.push({name: "result", query: {query: str}})
+    },
   }
 }
 </script>
