@@ -48,9 +48,10 @@ func GetSimpleWordIds(word string) ([]int, bool) {
 	// 由于存储时使用逗号作为分隔。所以读取时使用逗号分割
 	idStr := strings.Split(idList, ",")
 	// 这里减一是因为存入数据库时以 , 结尾，idStr 的末尾元素为空串
-	ids := make([]int, len(idStr)-1)
+	ids := make([]int, 0, len(idStr)-1)
 	for i := 0; i < len(idStr)-1; i++ {
-		ids[i], _ = strconv.Atoi(idStr[i])
+		id, _ := strconv.Atoi(idStr[i])
+		ids = append(ids, id)
 	}
 	return ids, true
 }

@@ -5,6 +5,7 @@ import (
 	"go-search-engine/src/service/index"
 	"math"
 	"sort"
+	"sync"
 )
 
 type IdScore struct {
@@ -18,25 +19,61 @@ type Counter struct {
 }
 
 func (c Counter) CountById(id int) (score float64, success bool) {
-	words, exists := index.GetIdWords(id)
+	forward, exists := index.GetIdWords(id)
 	if !exists {
 		return 0, false
 	}
-	return c.CosSimilarity(words.TopKWords, words.TopKWeights), true
+	return c.CosSimilarity(forward.TopKWords, forward.TopKWeights), true
 }
 
 func (c Counter) SortAfterCount(ids []int) IdScoreList {
-	scores := make(IdScoreList, len(ids))
-	for i := 0; i < len(ids); i++ {
-		score, _ := c.CountById(ids[i])
-		scores[i] = IdScore{
-			Score: score,
-			Id:    ids[i],
+	idScoreCh := make(chan IdScore)
+	idCh := make(chan int)
+
+	go func() {
+		for i := 0; i < len(ids); i++ {
+			idCh <- ids[i]
 		}
+		close(idCh)
+	}()
+
+	countWg := sync.WaitGroup{}
+	for i := 0; i < 6; i++ {
+		countWg.Add(1)
+		go func() {
+			for id := range idCh {
+				score, success := c.CountById(id)
+				if !success {
+					continue
+				}
+				idScoreCh <- IdScore{
+					Score: score,
+					Id:    id,
+				}
+			}
+			countWg.Done()
+		}()
 	}
-	sort.Sort(scores)
-	reverse(scores)
-	return scores
+
+	go func() {
+		countWg.Wait()
+		close(idScoreCh)
+	}()
+
+	idScores := make(IdScoreList, 0, len(ids)*2)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		for idScore := range idScoreCh {
+			idScores = append(idScores, idScore)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+
+	sort.Sort(idScores)
+	reverse(idScores)
+	return idScores
 }
 
 // Intersection 用交集大小计算指定关键词的得分，要求 targetWords 和 words 均为有序

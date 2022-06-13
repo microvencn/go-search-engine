@@ -19,10 +19,10 @@ func AddWordsToForwardIndex(id int, words []string, times []int, topKWords []str
 }
 
 // GetIdWords 获取 ID 对应的文档的关键词列表
-func GetIdWords(id int) (storage.ForwardStore, bool) {
+func GetIdWords(id int) (*storage.ForwardStore, bool) {
 	wordsListJson, e := storage.ForwardIndex.Get([]byte(strconv.Itoa(id)))
 	if !e {
-		return storage.ForwardStore{}, false
+		return nil, false
 	}
 
 	wordsList := storage.ForwardStore{}
@@ -30,10 +30,5 @@ func GetIdWords(id int) (storage.ForwardStore, bool) {
 	if err != nil {
 		log.Fatalln("错误的 json ", err)
 	}
-	return wordsList, true
-}
-
-// GetForwardIndex 获取指定 ID 文档的正排索引
-func GetForwardIndex(id int) (storage.ForwardStore, bool) {
-	return GetIdWords(id)
+	return &wordsList, true
 }
