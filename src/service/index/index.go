@@ -98,10 +98,14 @@ func InitWukongIndex() {
 
 func InitTrie() {
 	TrieTree = trie.NewTrie()
-	//for word := range storage.DocDB.DBList[1].Get() {
-	//	//构造trie树
-	//	TrieTree.Add(word)
-	//}
+	for csvRow := range ReadWukong(1) {
+		//构造trie树
+		csvRow.Columns[1] = utils.RemoveSpace(csvRow.Columns[1])
+		if len(csvRow.Columns) == 0 {
+			continue
+		}
+		TrieTree.Add(csvRow.Columns[1])
+	}
 }
 
 // splitUniqueWords 对文档进行分词，且记录关键词出现的次数
@@ -129,13 +133,22 @@ func splitUniqueWords(doc *string) ([]string, []int) {
 	return words, times
 }
 
-func ReadWukong() <-chan utils.CsvRow {
-	files := make([]string, 10)
-	for i := 0; i < 10; i++ {
-		files[i] = utils.GetPath(fmt.Sprintf("/dataset/wukong_100m_%d.csv", i))
+func ReadWukong(num ...int) <-chan utils.CsvRow {
+	if len(num) == 0 {
+		files := make([]string, 10)
+		for i := 0; i < 10; i++ {
+			files[i] = utils.GetPath(fmt.Sprintf("/dataset/wukong_100m_%d.csv", i))
+		}
+		//return utils.ReadCsv(2, true, utils.GetPath("/dataset/wukong.csv"))
+		return utils.ReadCsv(2, true, files...)
+	} else {
+		files := make([]string, num[0])
+		for i := 0; i < num[0]; i++ {
+			files[i] = utils.GetPath(fmt.Sprintf("/dataset/wukong_100m_%d.csv", i))
+		}
+		//return utils.ReadCsv(2, true, utils.GetPath("/dataset/wukong.csv"))
+		return utils.ReadCsv(2, true, files...)
 	}
-	//return utils.ReadCsv(2, true, utils.GetPath("/dataset/wukong.csv"))
-	return utils.ReadCsv(2, true, files...)
 }
 
 // GetDocument 根据 ID 获取文档
