@@ -12,7 +12,7 @@ type IdScore struct {
 	Id    int     `json:"id"`
 	Score float64 `json:"score"`
 }
-type IdScoreList []IdScore
+type IdScoreList []*IdScore
 
 type Counter struct {
 	TargetWords fenci.WordWeights
@@ -65,7 +65,7 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 	wg.Add(1)
 	go func() {
 		for idScore := range idScoreCh {
-			idScores = append(idScores, idScore)
+			idScores = append(idScores, &idScore)
 		}
 		wg.Done()
 	}()

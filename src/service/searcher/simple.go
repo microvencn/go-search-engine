@@ -12,7 +12,7 @@ import (
 
 type simple struct {
 	Doc string `json:"doc"`
-	score.IdScore
+	*score.IdScore
 }
 
 type SimpleResult []simple
@@ -25,32 +25,41 @@ func simpleSearch(query string) score.IdScoreList {
 	repeatedMap := make(map[string]bool, len(query))
 
 	// 对用户输入尝试取 TOPK 并去重
-	words := fenci.WeightTopK(query, 10)
-	ids := make([]int, 0, len(words)*5)
-	for i := 0; i < len(words); i++ {
-		if !repeatedMap[words[i].Text] {
-			targets = append(targets, words[i])
-			repeatedMap[words[i].Text] = true
-			id, _ := index.GetSimpleWordIds(words[i].Text)
+	queryTokens := fenci.WeightTopK(query, utils.MaxInt(len(query)/2, 1))
+	ids := make([]int, 0, len(queryTokens)*5)
+	for i := 0; i < len(queryTokens); i++ {
+		if _, ok := repeatedMap[queryTokens[i].Text]; !ok {
+			targets = append(targets, queryTokens[i])
+			repeatedMap[queryTokens[i].Text] = true
+			id, _ := index.GetSimpleWordIds(queryTokens[i].Text)
 			ids = append(ids, id...)
 		}
 	}
 	sort.Sort(targets)
 
-	// 关键词数量小于 10 时，取停止词等补充
-	//if len(words) < 5 {
-	//	fenci.ExecAndDoSomething(&query, func(word string) {
-	//		if !repeatedMap[word] {
-	//			targets = append(targets, fenci.WordWeight{
-	//				Text:   word,
-	//				Weight: 1,
-	//			})
-	//			repeatedMap[word] = true
-	//			id, _ := index.GetWordIds(word)
-	//			ids = append(ids, id...)
-	//		}
-	//	})
-	//}
+	// 关键词数量为0时，取停止词
+	if len(ids) == 0 {
+		fenci.ExecAndDoSomething(&query, func(word string) {
+			if !repeatedMap[word] {
+				targets = append(targets, fenci.WordWeight{
+					Text:   word,
+					Weight: 1,
+				})
+				repeatedMap[word] = true
+				id, _ := index.GetWordIds(word)
+				ids = append(ids, id...)
+			}
+		})
+		ids = utils.RemoveRepeatedElement(ids)
+		idScores := make(score.IdScoreList, 0, len(ids))
+		for i := 0; i < len(ids); i++ {
+			idScores = append(idScores, &score.IdScore{
+				Id:    ids[i],
+				Score: 0,
+			})
+		}
+		return idScores
+	}
 	ids = utils.RemoveRepeatedElement(ids)
 
 	// 初始化分数计算器，将用户输入的分词结果作为分数计算依据
