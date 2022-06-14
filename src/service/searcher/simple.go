@@ -25,7 +25,7 @@ func simpleSearch(query string) score.IdScoreList {
 	repeatedMap := make(map[string]bool, len(query))
 
 	// 对用户输入尝试取 TOPK 并去重
-	queryTokens := fenci.WeightTopK(query, utils.MaxInt(len(query)/2, 1))
+	queryTokens := fenci.WeightTopK(query, utils.MinInt(utils.MaxInt(len(query)/2, 1), 5))
 	ids := make([]int, 0, len(queryTokens)*5)
 	for i := 0; i < len(queryTokens); i++ {
 		if _, ok := repeatedMap[queryTokens[i].Text]; !ok {
