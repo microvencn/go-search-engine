@@ -1,6 +1,6 @@
 <template>
   <el-row class="gse_home-input">
-    <el-col :xs="{span: 18, offset: 3}" :sm="{span: 16, offset: 4}" :md="{span: 12, offset: 6}">
+    <el-col :xs="{span: 22, offset: 1}" :sm="{span: 18, offset: 3}" :md="{span: 12, offset: 6}">
       <h1>Go Search Engine</h1>
       <el-form @submit.prevent>
         <el-form-item>
