@@ -27,7 +27,7 @@ func (c Counter) CountById(id int) (score float64, success bool) {
 }
 
 func (c Counter) SortAfterCount(ids []int) IdScoreList {
-	idScoreCh := make(chan IdScore)
+	idScoreCh := make(chan *IdScore)
 	idCh := make(chan int)
 
 	go func() {
@@ -46,7 +46,7 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 				if !success {
 					continue
 				}
-				idScoreCh <- IdScore{
+				idScoreCh <- &IdScore{
 					Score: score,
 					Id:    id,
 				}
@@ -65,7 +65,7 @@ func (c Counter) SortAfterCount(ids []int) IdScoreList {
 	wg.Add(1)
 	go func() {
 		for idScore := range idScoreCh {
-			idScores = append(idScores, &idScore)
+			idScores = append(idScores, idScore)
 		}
 		wg.Done()
 	}()
