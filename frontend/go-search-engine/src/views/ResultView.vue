@@ -73,11 +73,13 @@
           </span>
         </router-link>
       </div>
+
       <div class="result-container" v-loading="searching">
+        <p>共 {{totalResult}} 条记录，耗时 {{searchTime}} s</p>
         <Result v-for="result in results" :title="result.doc" :content="result.doc" :score="result.score"></Result>
       </div>
       <div style="justify-content: center;display: flex; margin-top: 1rem">
-        <el-pagination background layout="prev, pager, next" :page-count="total_page" v-model:current-page="page"
+        <el-pagination background layout="prev, pager, next" :page-count="totalPage" v-model:current-page="page"
                        @current-change="search"/>
       </div>
     </el-col>
@@ -102,8 +104,10 @@ export default {
       relating: false,
       page: 1,
       pageSize: 10,
-      total_page: 1,
+      totalPage: 1,
+      totalResult: 0,
       filter: [],
+      searchTime: 0,
 
       displayingImg: [],
       imgStore: [],
@@ -143,7 +147,9 @@ export default {
       }).then((data) => {
         this.searching = false
         this.results = data.data
-        this.total_page = Math.ceil(data.total / this.pageSize)
+        this.totalResult = data.total
+        this.totalPage = Math.ceil(data.total / this.pageSize)
+        this.searchTime = data.time / 1000
       }).catch((err) => {
         this.$message.error("搜索失败请重试")
       })

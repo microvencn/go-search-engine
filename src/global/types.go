@@ -202,6 +202,7 @@ type SearchRequest struct {
 type SearchResponse struct {
 	Total int                   `json:"total"`
 	Data  searcher.SimpleResult `json:"data"`
+	Time  int64                 `json:"time"`
 }
 
 type AutoCompleteResponse struct {

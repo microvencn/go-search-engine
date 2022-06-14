@@ -10,10 +10,18 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func SimpleSearch(c *gin.Context) {
 	query := c.Query("query")
+	if len(query) == 0 {
+		c.JSON(http.StatusOK, global.SearchResponse{
+			Total: 0,
+			Data:  make(searcher.SimpleResult, 0),
+			Time:  0,
+		})
+	}
 	page, err := strconv.Atoi(c.Query("page"))
 	pageSize, err2 := strconv.Atoi(c.Query("page_size"))
 	if err != nil || err2 != nil {
@@ -30,8 +38,11 @@ func SimpleSearch(c *gin.Context) {
 			filter[i] = strings.Replace(filter[i], "\n", "", -1)
 		}
 	}
+	startTime := time.Now()
 	total, data := searcher.SimpleWithFilter(query, offset, pageSize, filter)
-	c.JSON(http.StatusOK, global.SearchResponse{Total: total, Data: data})
+	endTime := time.Now()
+	duration := endTime.Sub(startTime).Milliseconds()
+	c.JSON(http.StatusOK, global.SearchResponse{Total: total, Data: data, Time: duration})
 	return
 }
 
